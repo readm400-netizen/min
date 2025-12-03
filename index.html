@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Rojgar Point Ultimate</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        :root { --primary: #6366f1; --bg: #f8fafc; --text: #1e293b; --card: #ffffff; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Hind Siliguri', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg); color: var(--text); padding-bottom: 100px; height: 100vh; overflow-y: scroll; }
+
+        /* LOADER */
+        #loader { 
+            position: fixed; inset: 0; background: white; z-index: 6000; 
+            display: flex; justify-content: center; align-items: center; flex-direction: column;
+        }
+        .loader-user-img {
+            width: 110px; height: 110px; border-radius: 50%; object-fit: cover;
+            border: 4px solid var(--primary); box-shadow: 0 0 25px rgba(99, 102, 241, 0.3);
+            animation: pulse 2s infinite ease-in-out;
+        }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+
+        /* HEADER */
+        .header { background: var(--card); padding: 20px; border-radius: 0 0 25px 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
+        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .user-info h2 { font-size: 1.4rem; font-weight: 700; margin: 0; color: #334155; }
+        .profile-av { width: 50px; height: 50px; background: #e0e7ff; color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.1); overflow: hidden; }
+        .profile-av img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* BALANCE CARD */
+        .bal-card { background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%); padding: 20px; border-radius: 18px; color: white; box-shadow: 0 8px 25px rgba(79, 70, 229, 0.3); position: relative; overflow: hidden; margin-bottom: 15px; }
+        .bal-amount { font-size: 2.4rem; font-weight: 700; margin: 5px 0 10px 0; }
+        .id-pill { background: rgba(255, 255, 255, 0.2); padding: 6px 12px; border-radius: 8px; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.1); }
+
+        /* TABS */
+        .cat-scroll { display: none; gap: 10px; overflow-x: auto; padding: 5px 0 10px 0; scrollbar-width: none; }
+        .cat-btn { background: white; padding: 8px 18px; border-radius: 50px; border: 1px solid #e2e8f0; white-space: nowrap; display: flex; align-items: center; gap: 8px; font-weight: 600; cursor: pointer; color: #64748b; transition: 0.2s; }
+        .cat-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .cat-img-icon { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; }
+
+        /* TASKS */
+        .task-card { background: white; padding: 15px; border-radius: 15px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; border: 1px solid #f1f5f9; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+        .t-icon-box { width: 45px; height: 45px; border-radius: 12px; overflow: hidden; margin-right: 15px; display: flex; align-items: center; justify-content: center; background: #f1f5f9; }
+        .t-img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* DASHBOARD */
+        .dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 15px; }
+        .d-box { background: white; padding: 15px; border-radius: 15px; text-align: center; border: 1px solid #f1f5f9; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+
+        /* WITHDRAW OPTIONS */
+        .w-option { background: white; padding: 18px; border-radius: 15px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; border: 1px solid #e2e8f0; cursor: pointer; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.01); }
+        
+        /* NAV */
+        .nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; justify-content: space-around; padding: 12px 0 20px 0; border-top: 1px solid #f1f5f9; z-index: 1000; }
+        .nav-item { text-align: center; color: #94a3b8; width: 25%; font-size: 0.8rem; cursor: pointer; }
+        .nav-item.active { color: var(--primary); font-weight: 600; }
+        .nav-item i { display: block; font-size: 1.4rem; margin-bottom: 5px; }
+
+        /* ADMIN & MODALS */
+        .admin-fab { position: fixed; bottom: 100px; right: 20px; width: 55px; height: 55px; background: #1e293b; color: white; border-radius: 50%; display: none; align-items: center; justify-content: center; z-index: 2000; box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
+        #p-admin { position: fixed; inset: 0; background: #0f172a; color: #e2e8f0; z-index: 5000; padding: 20px; overflow-y: auto; display: none; }
+        .adm-sec { background: #1e293b; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #334155; }
+        .adm-inp { width: 100%; padding: 12px; background: #0f172a; border: 1px solid #475569; color: white; border-radius: 8px; margin-bottom: 10px; outline: none; }
+        .adm-btn { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 600; margin-top: 5px; cursor: pointer; }
+        .adm-label { font-size: 0.85rem; color: #94a3b8; margin-bottom: 5px; display: block; }
+
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 3000; align-items: flex-end; justify-content: center; backdrop-filter: blur(3px); }
+        .modal.active { display: flex; }
+        .modal-content { background: white; width: 100%; padding: 25px; border-radius: 25px 25px 0 0; animation: up 0.3s; padding-bottom: 40px; }
+        @keyframes up { from {transform: translateY(100%);} to {transform: translateY(0);} }
+        .w-in { width: 100%; padding: 15px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 12px; outline: none; font-size: 1rem; }
+        
+        .page { display: none; padding: 20px; animation: fade 0.3s; }
+        .page.active { display: block; }
+        @keyframes fade { from {opacity: 0;} to {opacity: 1;} }
+    </style>
+</head>
+<body>
+
+    <div id="loader">
+        <img src="https://cdn-icons-png.flaticon.com/512/9334/9334631.png" class="loader-user-img" id="loader-img" alt="Loader">
+        <p style="margin-top:20px; color:#64748b; font-weight:500;">লোড হচ্ছে...</p>
+    </div>
+
+    <div id="login-screen" style="display:none; position:fixed; inset:0; background:white; z-index:5500; flex-direction:column; justify-content:center; align-items:center; padding:30px;">
+        <h2 style="color:var(--primary); margin-bottom:20px;">স্বাগতম</h2>
+        <input type="text" id="login-user" class="w-in" placeholder="ইউজার নেম দিন" style="text-align:center;">
+        <button onclick="manualLogin()" class="adm-btn">লগিন করুন</button>
+    </div>
+
+    <div id="app-content">
+        <div class="header">
+            <div class="header-top">
+                <div class="user-info">
+                    <h2><span id="u-name">Guest</span></h2>
+                    <small>ID: <span id="header-id">...</span></small>
+                </div>
+                <div class="profile-av" id="u-av">?</div>
+            </div>
+
+            <div class="bal-card">
+                <div style="font-size:0.9rem; opacity:0.9;">বর্তমান ব্যালেন্স</div>
+                <div class="bal-amount">৳<span id="u-bal">0.00</span></div>
+                <div class="id-pill" onclick="copyCardID()">
+                    <i class="far fa-credit-card"></i> <span><span id="card-id-display">...</span></span> <i class="far fa-copy"></i>
+                </div>
+            </div>
+
+            <div class="cat-scroll" id="cat-tabs"></div>
+        </div>
+
+        <div id="p-tasks" class="page active">
+            <h4 style="margin-bottom:15px; color:#64748b;">সকল কাজ</h4>
+            <div id="task-container">
+                <p style="text-align:center; margin-top:30px; color:#94a3b8;">লোড হচ্ছে...</p>
+            </div>
+            <div style="height: 70px;"></div>
+        </div>
+
+        <div id="p-profile" class="page">
+            <h3>ড্যাশবোর্ড</h3>
+            <div class="dash-grid">
+                <div class="d-box">
+                    <h2 style="color:var(--primary); margin:0;" id="d-task-count">0</h2>
+                    <small style="color:#94a3b8;">আজকের কাজ</small>
+                </div>
+                <div class="d-box">
+                    <h2 style="color:#10b981; margin:0;">৳<span id="d-today-earn">0</span></h2>
+                    <small style="color:#94a3b8;">আজকের আয়</small>
+                </div>
+                <div class="d-box">
+                    <h2 style="color:#334155; margin:0;" id="d-ref-count">0</h2>
+                    <small style="color:#94a3b8;">মোট রেফার</small>
+                </div>
+                <div class="d-box">
+                    <h2 style="color:#334155; margin:0;">৳<span id="d-ref-earn">0</span></h2>
+                    <small style="color:#94a3b8;">রেফার আয়</small>
+                </div>
+            </div>
+
+            <div style="background:white; border-radius:15px; margin-top:20px; overflow:hidden; border:1px solid #f1f5f9; box-shadow: 0 2px 10px rgba(0,0,0,0.02);">
+                <div onclick="openSupport()" style="padding:18px; border-bottom:1px solid #f1f5f9; cursor:pointer; display:flex; align-items:center;">
+                    <i class="fas fa-headset" style="color:#94a3b8; width:30px; font-size:1.2rem;"></i> সাপোর্ট
+                </div>
+                <div onclick="nav('p-rules', document.getElementById('nav-profile'))" style="padding:18px; cursor:pointer; color:var(--primary); display:flex; align-items:center;">
+                    <i class="fas fa-book-open" style="width:30px; font-size:1.2rem;"></i> নিয়ম ও টিউটোরিয়াল
+                </div>
+            </div>
+            <div style="height: 70px;"></div>
+        </div>
+
+        <div id="p-rules" class="page">
+            <h3>নিয়মাবলী ও টিউটোরিয়াল</h3>
+            <p style="color:#64748b; font-size:0.9rem; margin-bottom:20px;">কাজের ভিডিও দেখুন</p>
+            <div style="width:100%; height:200px; background:#000; border-radius:15px; margin-bottom:20px; overflow:hidden;" id="video-container">
+                <p style="color:white; text-align:center; padding-top:80px;">Video Loading...</p>
+            </div>
+            <div style="background:white; padding:20px; border-radius:15px; line-height:1.7; color:#334155; white-space:pre-line; box-shadow: 0 2px 10px rgba(0,0,0,0.02);" id="rules-display">
+                লোড হচ্ছে...
+            </div>
+            <div style="height: 70px;"></div>
+        </div>
+
+        <div id="p-wallet" class="page">
+            <h3>ওয়ালেট</h3>
+            <div style="margin-top:25px;">
+                <div class="w-option" onclick="handleWithdrawClick()">
+                    <div style="display:flex; align-items:center;">
+                        <div style="width:45px; height:45px; background:#e0e7ff; color:var(--primary); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.2rem;"><i class="fas fa-university"></i></div>
+                        <div style="margin-left:15px;">
+                            <div style="font-weight:600; font-size:1rem;">টাকা তুলুন</div>
+                            <small style="color:#94a3b8;">বিকাশ, নগদ, রকেট</small>
+                        </div>
+                    </div>
+                    <i class="fas fa-chevron-right" style="color:#cbd5e1;"></i>
+                </div>
+
+                <div class="w-option" onclick="openModal('transfer')">
+                    <div style="display:flex; align-items:center;">
+                        <div style="width:45px; height:45px; background:#d1fae5; color:#10b981; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.2rem;"><i class="fas fa-paper-plane"></i></div>
+                        <div style="margin-left:15px;">
+                            <div style="font-weight:600; font-size:1rem;">টাকা পাঠান</div>
+                            <small style="color:#94a3b8;">P2P ট্রান্সফার</small>
+                        </div>
+                    </div>
+                    <i class="fas fa-chevron-right" style="color:#cbd5e1;"></i>
+                </div>
+            </div>
+            <div style="height: 70px;"></div>
+        </div>
+
+        <div id="p-refer" class="page">
+            <div style="text-align:center; padding:20px; background:white; border-radius:20px; box-shadow:0 2px 15px rgba(0,0,0,0.02);">
+                <img src="https://cdn-icons-png.flaticon.com/512/3893/3893069.png" width="70" style="margin-bottom:15px;">
+                
+                <h2 style="color:#334155; margin-bottom:10px;">বোনাস: ৳<span id="disp-bonus">0</span></h2>
+                
+                <p style="color:#64748b; margin-bottom:25px;" id="refer-note-display">অফার লোড হচ্ছে...</p>
+
+                <div style="background:#f8fafc; padding:15px; border-radius:10px; border:1px dashed #cbd5e1; font-size:0.9rem; color:#475569; word-break:break-all;" id="ref-link-txt">...</div>
+                <input type="text" id="ref-link-real" style="display:none;">
+                <button onclick="copyRef()" class="adm-btn" style="background:#334155; margin-top:20px; width:100%;">লিংক কপি করুন</button>
+            </div>
+            <div style="height: 70px;"></div>
+        </div>
+    </div>
+
+    <div class="admin-fab" id="admin-btn" onclick="openAdmin()"><i class="fas fa-cogs"></i></div>
+    
+    <div id="p-admin">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <h3>Admin Panel</h3>
+            <button onclick="closeAdmin()" style="background:#ef4444; color:white; border:none; padding:5px 15px; border-radius:8px;">Exit</button>
+        </div>
+
+        <div class="adm-sec">
+            <h4 style="color:#94a3b8; margin-bottom:10px;">Home Popup</h4>
+            <span class="adm-label">App Open Popup Message</span>
+            <textarea id="adm-popup" class="adm-inp" rows="2" placeholder="Welcome message..."></textarea>
+            <button onclick="saveSettings()" class="adm-btn">Save Popup</button>
+        </div>
+
+        <div class="adm-sec">
+            <h4 style="color:#94a3b8; margin-bottom:10px;">Withdraw Settings</h4>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <div>
+                    <span class="adm-label">Min Amount</span>
+                    <input type="number" id="adm-min-w" class="adm-inp" placeholder="500">
+                </div>
+                <div>
+                    <span class="adm-label">Min Refer Count</span>
+                    <input type="number" id="adm-min-r" class="adm-inp" placeholder="5">
+                </div>
+            </div>
+            <span class="adm-label">Withdraw Popup Rule Text (Alert Message)</span>
+            <textarea id="adm-w-popup" class="adm-inp" rows="3" placeholder="This text shows when user clicks withdraw..."></textarea>
+            <button onclick="saveSettings()" class="adm-btn">Update Rules</button>
+        </div>
+
+        <div class="adm-sec">
+            <h4 style="color:#94a3b8; margin-bottom:10px;">Refer Settings</h4>
+            <span class="adm-label">Bonus Amount (Tk)</span>
+            <input type="number" id="adm-bonus" class="adm-inp" placeholder="120">
+            <span class="adm-label">Refer Page Note</span>
+            <textarea id="adm-ref-note" class="adm-inp" rows="2" placeholder="Note on Refer Page..."></textarea>
+            <button onclick="saveSettings()" class="adm-btn">Update Refer</button>
+        </div>
+
+        <div class="adm-sec">
+            <h4 style="color:#94a3b8; margin-bottom:10px;">Rules & Video</h4>
+            <span class="adm-label">YouTube Link</span>
+            <input type="text" id="adm-video" class="adm-inp" placeholder="https://youtube.com...">
+            <span class="adm-label">Rules Page Text</span>
+            <textarea id="adm-rules" class="adm-inp" rows="3"></textarea>
+            <button onclick="saveSettings()" class="adm-btn">Update Content</button>
+        </div>
+
+        <div class="adm-sec">
+            <h4 style="color:#94a3b8; margin-bottom:10px;">Add Content</h4>
+            <div style="display:flex; gap:5px; margin-bottom:10px;">
+                <input type="text" id="cat-name" class="adm-inp" placeholder="Cat Name" style="margin:0;">
+                <input type="text" id="cat-icon" class="adm-inp" placeholder="Img URL" style="margin:0;">
+                <button onclick="addCat()" style="background:#10b981; color:white; border:none; border-radius:8px; width:60px;">Add</button>
+            </div>
+            <select id="task-cat" class="adm-inp"></select>
+            <input type="text" id="t-title" class="adm-inp" placeholder="Title">
+            <input type="number" id="t-rew" class="adm-inp" placeholder="Reward">
+            <input type="text" id="t-link" class="adm-inp" placeholder="Link">
+            <input type="text" id="t-img" class="adm-inp" placeholder="Icon URL">
+            <button onclick="addTask()" class="adm-btn" style="background:#10b981;">Publish Task</button>
+        </div>
+    </div>
+
+    <div id="modal-withdraw" class="modal" onclick="closeModal(event)">
+        <div class="modal-content">
+            <h3 style="margin-bottom:15px;">উইথড্রো</h3>
+            <select id="w-method" class="w-in">
+                <option value="">মেথড সিলেক্ট করুন</option>
+                <option value="Bkash">বিকাশ</option>
+                <option value="Nagad">নগদ</option>
+                <option value="Rocket">রকেট</option>
+            </select>
+            <input type="number" id="w-num" class="w-in" placeholder="নাম্বার">
+            <input type="number" id="w-amt" class="w-in" placeholder="টাকার পরিমাণ">
+            <button onclick="withdraw()" class="adm-btn">নিশ্চিত করুন</button>
+        </div>
+    </div>
+
+    <div id="modal-transfer" class="modal" onclick="closeModal(event)">
+        <div class="modal-content">
+            <h3 style="margin-bottom:15px;">টাকা পাঠান</h3>
+            <input type="text" id="tr-id" class="w-in" placeholder="রিসিভার আইডি">
+            <input type="number" id="tr-amt" class="w-in" placeholder="টাকার পরিমাণ">
+            <button onclick="transfer()" class="adm-btn" style="background:#10b981;">পাঠিয়ে দিন</button>
+        </div>
+    </div>
+
+    <div class="nav" id="main-nav">
+        <div class="nav-item active" onclick="nav('p-tasks', this)"><i class="fas fa-home"></i>হোম</div>
+        <div class="nav-item" id="nav-profile" onclick="nav('p-profile', this)"><i class="fas fa-user-circle"></i>প্রোফাইল</div>
+        <div class="nav-item" onclick="nav('p-wallet', this)"><i class="fas fa-wallet"></i>ওয়ালেট</div>
+        <div class="nav-item" onclick="nav('p-refer', this)"><i class="fas fa-users"></i>রেফার</div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, set, get, update, onValue, push, query, orderByChild, equalTo, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAxRuQsi36v3uT-IRXqbls4OBA9PVddqiM",
+            authDomain: "telegram-mini-apps-2cc3c.firebaseapp.com",
+            databaseURL: "https://telegram-mini-apps-2cc3c-default-rtdb.firebaseio.com",
+            projectId: "telegram-mini-apps-2cc3c",
+            storageBucket: "telegram-mini-apps-2cc3c.firebasestorage.app",
+            messagingSenderId: "819238200908",
+            appId: "1:819238200908:web:3f97d8de37d8b46c0936e9"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        
+        const ADMIN_ID = "8391024974"; 
+        const BOT_USERNAME = "Rojgar_Point_bot";
+        const BOT_TOKEN = "8280244541:AAE8SP9L9QzfBXIEBVatzLQdV9nNjpEhcV8";
+
+        let user = null, settings = {}, activeCat = 'all', allTasks = {};
+        let popupShown = false;
+
+        window.tg = window.Telegram.WebApp;
+        window.tg.expand();
+
+        function getYouTubeId(url) {
+            if(!url) return null;
+            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+            const match = url.match(regExp);
+            return (match && match[2].length === 11) ? match[2] : null;
+        }
+
+        async function init() {
+            let uid = null, name = "Guest", refBy = null, photo = null;
+            
+            if (window.tg.initDataUnsafe && window.tg.initDataUnsafe.user) {
+                const u = window.tg.initDataUnsafe.user;
+                uid = u.id.toString(); 
+                name = u.first_name + (u.last_name ? ' ' + u.last_name : '');
+                refBy = window.tg.initDataUnsafe.start_param;
+                photo = u.photo_url;
+                if(photo) document.getElementById('loader-img').src = photo;
+            } else { uid = localStorage.getItem('web_uid'); }
+
+            if (uid) loginUser(uid, name, refBy, photo);
+            else {
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('login-screen').style.display = 'flex';
+            }
+        }
+
+        window.manualLogin = function() {
+            const input = document.getElementById('login-user').value;
+            if(!input) return;
+            const uid = "web_" + input.replace(/[^a-zA-Z0-9]/g, '').toLowerCase(); 
+            localStorage.setItem('web_uid', uid);
+            loginUser(uid, input, null, null);
+        }
+
+        async function loginUser(uid, name, refBy, photo) {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('loader').style.display = 'flex';
+            
+            const uRef = ref(db, 'users/' + uid);
+            const todayStr = new Date().toDateString();
+
+            onValue(uRef, async (snap) => {
+                if(snap.exists()) {
+                    user = snap.val();
+                    const updates = {};
+                    if(photo && user.photo !== photo) updates.photo = photo;
+                    if(name && user.name !== name) updates.name = name;
+                    
+                    if(user.lastActive !== todayStr) {
+                        updates.todayEarn = 0;
+                        updates.todayCount = 0;
+                        updates.lastActive = todayStr;
+                    }
+                    if(!user.cardID) updates.cardID = Math.floor(1000000000 + Math.random() * 9000000000).toString();
+                    if(Object.keys(updates).length > 0) await update(uRef, updates);
+                    
+                    updateUI();
+                } else {
+                    const cardID = Math.floor(1000000000 + Math.random() * 9000000000).toString();
+                    user = { id: uid, name: name, balance: 0, todayEarn: 0, todayCount: 0, lastActive: todayStr, refCount: 0, refEarn: 0, cardID: cardID, completed: {}, photo: photo || '' };
+                    
+                    if(refBy && refBy !== uid) {
+                         const rSnap = await get(ref(db, 'users/'+refBy));
+                         if(rSnap.exists()) {
+                             const sSnap = await get(ref(db, 'settings'));
+                             const bonus = sSnap.exists() ? (parseFloat(sSnap.val().referBonus) || 0) : 0;
+                             
+                             await update(ref(db, 'users/'+refBy), {
+                                 balance: parseFloat(rSnap.val().balance) + bonus,
+                                 refCount: (rSnap.val().refCount || 0) + 1,
+                                 refEarn: (parseFloat(rSnap.val().refEarn) || 0) + bonus
+                             });
+                             if(bonus > 0) fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${refBy}&text=🎉 New Refer! You earned ৳${bonus}`);
+                         }
+                    }
+                    await set(uRef, user);
+                    fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${ADMIN_ID}&text=🚀 New User: ${name}`);
+                }
+                document.getElementById('loader').style.display = 'none';
+            });
+            loadData();
+        }
+
+        function updateUI() {
+            document.getElementById('u-name').innerText = user.name;
+            document.getElementById('u-bal').innerText = parseFloat(user.balance).toFixed(2);
+            document.getElementById('card-id-display').innerText = user.cardID;
+            document.getElementById('header-id').innerText = user.cardID;
+            
+            if(user.photo) {
+                document.getElementById('u-av').innerHTML = `<img src="${user.photo}">`;
+            } else {
+                document.getElementById('u-av').innerHTML = user.name.charAt(0).toUpperCase();
+            }
+            
+            document.getElementById('d-task-count').innerText = (user.todayCount || 0) + "/10";
+            document.getElementById('d-today-earn').innerText = parseFloat(user.todayEarn || 0).toFixed(2);
+            document.getElementById('d-ref-count').innerText = user.refCount || 0;
+            document.getElementById('d-ref-earn').innerText = parseFloat(user.refEarn || 0).toFixed(2);
+
+            const link = `https://t.me/${BOT_USERNAME}?start=${user.id}`;
+            document.getElementById('ref-link-txt').innerText = link;
+            document.getElementById('ref-link-real').value = link;
+
+            if(String(user.id) === String(ADMIN_ID)) {
+                document.getElementById('admin-btn').style.display = 'flex';
+                initAdminPanel();
+            }
+            document.getElementById('cat-tabs').style.display = 'flex'; 
+            renderTasks();
+        }
+
+        function loadData() {
+            onValue(ref(db, 'settings'), snap => {
+                if(snap.exists()) {
+                    settings = snap.val();
+                    
+                    // Refer Note & Bonus Display
+                    document.getElementById('refer-note-display').innerText = settings.referNote || "Invite friends!";
+                    document.getElementById('disp-bonus').innerText = settings.referBonus || 0;
+                    
+                    if(settings.rulesText) document.getElementById('rules-display').innerText = settings.rulesText;
+                    if(settings.videoLink) {
+                        const vId = getYouTubeId(settings.videoLink);
+                        if(vId) document.getElementById('video-container').innerHTML = `<iframe src="https://www.youtube.com/embed/${vId}" frameborder="0" allowfullscreen></iframe>`;
+                    }
+                    
+                    // HOME POPUP
+                    if(settings.popupMsg && !popupShown) {
+                        popupShown = true;
+                        Swal.fire({
+                            title: 'নোটিশ',
+                            text: settings.popupMsg,
+                            confirmButtonColor: '#6366f1',
+                            confirmButtonText: 'ঠিক আছে'
+                        });
+                    }
+                }
+            });
+
+            onValue(ref(db, 'categories'), snap => {
+                const tabs = document.getElementById('cat-tabs');
+                tabs.innerHTML = `<div class="cat-btn active" onclick="setCat('all', this)">সব</div>`;
+                const sel = document.getElementById('task-cat');
+                if(sel) sel.innerHTML = '';
+                if(snap.exists()) {
+                    const cats = snap.val();
+                    Object.keys(cats).forEach(key => {
+                        const c = cats[key];
+                        let iconHtml = '';
+                        if(c.icon && c.icon.startsWith('http')) iconHtml = `<img src="${c.icon}" class="cat-img-icon">`;
+                        tabs.innerHTML += `<div class="cat-btn" onclick="setCat('${key}', this)">${iconHtml} ${c.name}</div>`;
+                        if(sel) sel.innerHTML += `<option value="${key}">${c.name}</option>`;
+                    });
+                }
+            });
+
+            onValue(ref(db, 'tasks'), snap => {
+                allTasks = snap.exists() ? snap.val() : {};
+                renderTasks();
+            });
+        }
+
+        window.renderTasks = function() {
+            const list = document.getElementById('task-container');
+            list.innerHTML = '';
+            
+            if((user.todayCount || 0) >= 10) {
+                list.innerHTML = `<div style="text-align:center; padding:20px; color:#ef4444;">আজকের লিমিট শেষ (১০/১০)।</div>`;
+                return;
+            }
+
+            const completed = user && user.completed ? user.completed : {};
+            
+            Object.keys(allTasks).forEach(key => {
+                const t = allTasks[key];
+                if((activeCat === 'all' || t.category === activeCat) && !completed[key]) {
+                    let iconHtml = `<div class="t-icon-box"><i class="fas fa-gift" style="color:var(--primary);"></i></div>`;
+                    if(t.icon && t.icon.startsWith('http')) iconHtml = `<div class="t-icon-box"><img src="${t.icon}" class="t-img"></div>`;
+
+                    list.innerHTML += `
+                    <div class="task-card">
+                        <div style="display:flex; align-items:center;">
+                            ${iconHtml}
+                            <div>
+                                <div style="font-weight:600; color:#334155;">${t.title}</div>
+                                <div style="font-size:0.85rem; color:#10b981;">+৳${t.reward}</div>
+                            </div>
+                        </div>
+                        <button class="adm-btn" style="width:auto; padding:6px 15px; margin:0; font-size:0.8rem;" onclick="doTask('${key}', ${t.reward}, '${t.link}')">Start</button>
+                    </div>`;
+                }
+            });
+        }
+
+        window.doTask = async function(tid, rew, link) {
+            window.open(link, '_blank');
+            const updates = {};
+            updates['users/'+user.id+'/balance'] = (parseFloat(user.balance) + parseFloat(rew));
+            updates['users/'+user.id+'/todayEarn'] = (parseFloat(user.todayEarn||0) + parseFloat(rew));
+            updates['users/'+user.id+'/todayCount'] = ((user.todayCount||0) + 1);
+            updates['users/'+user.id+'/completed/'+tid] = true;
+            await update(ref(db), updates);
+            Swal.fire({toast:true, icon:'success', title:'টাকা যোগ হয়েছে', timer:1500, showConfirmButton:false});
+        }
+
+        window.setCat = function(cat, el) {
+            activeCat = cat;
+            document.querySelectorAll('.cat-btn').forEach(e => e.classList.remove('active'));
+            el.classList.add('active');
+            renderTasks();
+        }
+
+        // --- NEW WITHDRAW LOGIC: POPUP FIRST ---
+        window.handleWithdrawClick = function() {
+            // Show Admin Set Popup Rules First
+            Swal.fire({
+                title: 'উত্তোলনের নিয়ম',
+                text: settings.withdrawPopupText || 'Minimum withdraw 500tk & 5 Refers required.',
+                icon: 'info',
+                confirmButtonText: 'রাজি আছি',
+                confirmButtonColor: '#6366f1'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    openModal('withdraw');
+                }
+            });
+        }
+
+        window.withdraw = async function() {
+            const method = document.getElementById('w-method').value;
+            const num = document.getElementById('w-num').value;
+            const amt = parseFloat(document.getElementById('w-amt').value);
+            
+            const minW = parseFloat(settings.minWithdraw) || 500;
+            const minR = parseInt(settings.minRefer) || 0;
+            const userRefs = parseInt(user.refCount) || 0;
+
+            if(!method || !num || !amt) return Swal.fire('ভুল', 'সব তথ্য দিন', 'error');
+            if(amt < minW) return Swal.fire('ভুল', 'সর্বনিম্ন উইথড্রো: ৳'+minW, 'error');
+            if(userRefs < minR) return Swal.fire('দুঃখিত', `আরও ${minR - userRefs} টি রেফার প্রয়োজন।`, 'error');
+            if(amt > user.balance) return Swal.fire('ভুল', 'পর্যাপ্ত ব্যালেন্স নেই', 'error');
+
+            const rid = Date.now();
+            await set(ref(db, 'withdraws/'+rid), {
+                id: rid, userId: user.id, userName: user.name, 
+                amount: amt, number: num, method: method, status: 'pending', date: new Date().toLocaleString()
+            });
+            await update(ref(db, 'users/'+user.id), { balance: user.balance - amt });
+            
+            const msg = `💸 *Withdraw Request* %0A👤 User: ${user.name} %0A💰 Amount: ৳${amt} %0A🏦 Method: ${method} %0A📱 Number: ${num}`;
+            fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${ADMIN_ID}&text=${msg}&parse_mode=Markdown`);
+            
+            Swal.fire('সফল', 'রিকোয়েস্ট পাঠানো হয়েছে', 'success');
+            document.getElementById('modal-withdraw').classList.remove('active');
+        }
+
+        window.transfer = async function() {
+            const tid = document.getElementById('tr-id').value;
+            const amt = parseFloat(document.getElementById('tr-amt').value);
+            
+            if(tid === user.cardID) return Swal.fire('ভুল', 'নিজের একাউন্টে পাঠানো যাবে না!', 'error');
+            if(amt > user.balance) return Swal.fire('ভুল', 'পর্যাপ্ত ব্যালেন্স নেই', 'error');
+            
+            const q = query(ref(db, 'users'), orderByChild('cardID'), equalTo(tid));
+            const snap = await get(q);
+            if(snap.exists()) {
+                const tUid = Object.keys(snap.val())[0];
+                const updates = {};
+                updates['users/'+user.id+'/balance'] = user.balance - amt;
+                updates['users/'+tUid+'/balance'] = parseFloat(snap.val()[tUid].balance) + amt;
+                await update(ref(db), updates);
+                Swal.fire('সফল', 'টাকা পাঠানো হয়েছে!', 'success');
+                document.getElementById('modal-transfer').classList.remove('active');
+            } else {
+                Swal.fire('ভুল', 'ইউজার আইডি ভুল', 'error');
+            }
+        }
+
+        window.nav = function(p, el) {
+            document.querySelectorAll('.page').forEach(e=>e.classList.remove('active'));
+            document.getElementById(p).classList.add('active');
+            document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active'));
+            el.classList.add('active');
+            if(p === 'p-tasks') document.getElementById('cat-tabs').style.display = 'flex';
+            else document.getElementById('cat-tabs').style.display = 'none';
+        }
+        
+        window.openAdmin = function() { document.getElementById('p-admin').style.display = 'block'; }
+        window.closeAdmin = function() { document.getElementById('p-admin').style.display = 'none'; }
+        
+        function initAdminPanel() {
+            if(settings) {
+                document.getElementById('adm-popup').value = settings.popupMsg || '';
+                document.getElementById('adm-w-popup').value = settings.withdrawPopupText || '';
+                document.getElementById('adm-min-w').value = settings.minWithdraw || '';
+                document.getElementById('adm-min-r').value = settings.minRefer || '';
+                document.getElementById('adm-bonus').value = settings.referBonus || '';
+                document.getElementById('adm-rules').value = settings.rulesText || '';
+                document.getElementById('adm-video').value = settings.videoLink || '';
+                document.getElementById('adm-ref-note').value = settings.referNote || '';
+            }
+            // Load Tasks...
+        }
+
+        window.saveSettings = async function() {
+            await update(ref(db, 'settings'), {
+                popupMsg: document.getElementById('adm-popup').value,
+                withdrawPopupText: document.getElementById('adm-w-popup').value,
+                minWithdraw: parseFloat(document.getElementById('adm-min-w').value),
+                minRefer: parseInt(document.getElementById('adm-min-r').value),
+                referBonus: parseFloat(document.getElementById('adm-bonus').value),
+                rulesText: document.getElementById('adm-rules').value,
+                videoLink: document.getElementById('adm-video').value,
+                referNote: document.getElementById('adm-ref-note').value,
+            });
+            Swal.fire({toast:true, title:'সেভ হয়েছে', icon:'success', timer:1500});
+        }
+
+        window.addCat = async function() {
+            const n = document.getElementById('cat-name').value;
+            const i = document.getElementById('cat-icon').value;
+            if(n) await set(ref(db, 'categories/'+push(ref(db, 'categories')).key), { name: n, icon: i });
+            Swal.fire({toast:true, title:'যুক্ত হয়েছে', icon:'success', timer:1000});
+        }
+
+        window.addTask = async function() {
+            const c = document.getElementById('task-cat').value;
+            const t = document.getElementById('t-title').value;
+            const r = document.getElementById('t-rew').value;
+            const l = document.getElementById('t-link').value;
+            const i = document.getElementById('t-img').value;
+            if(c && t) await set(ref(db, 'tasks/'+push(ref(db, 'tasks')).key), { category:c, title:t, reward:r, link:l, icon:i });
+            Swal.fire({toast:true, title:'পাবলিশ হয়েছে', icon:'success', timer:1500});
+        }
+
+        window.openModal = (t) => document.getElementById('modal-'+t).classList.add('active');
+        window.closeModal = (e) => { if(e.target.classList.contains('modal')) e.target.classList.remove('active'); }
+        window.copyRef = () => { navigator.clipboard.writeText(document.getElementById('ref-link-real').value); Swal.fire({toast:true, title:'কপি হয়েছে', icon:'success', timer:1000, showConfirmButton:false}); }
+        window.copyCardID = () => { navigator.clipboard.writeText(user.cardID); Swal.fire({toast:true, title:'আইডি কপি হয়েছে', icon:'success', timer:1000, showConfirmButton:false}); }
+        window.openSupport = () => window.open(settings.supportLink||'#', '_blank');
+        window.logout = () => { localStorage.removeItem('web_uid'); location.reload(); }
+
+        init();
+    </script>
+</body>
+</html>
